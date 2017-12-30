@@ -28,8 +28,8 @@ def printschedule(r):
     for d in range(0, int(len(r)/2)):
         name = people[d][0]
         origin = people[d][1]
-        out = flights[(origin, destination)][r[2*d]]
-        ret = flights[(destination, origin)][r[2*d+1]]
+        out = flights[(origin, destination)][int(r[2*d])]
+        ret = flights[(destination, origin)][int(r[2*d+1])]
         print('%10s%10s %5s-%5s $%3s %5s-%5s &%3s' % (name, origin, out[0], out[1], out[2], ret[0], ret[1], ret[2]))
 
 def schedulecost(sol):
@@ -72,21 +72,54 @@ def schedulecost(sol):
 def randomoptimize(domain, costf):
     best = 999999999
     bestr = None
-    for i in range(0, 1000):
+    for i in range(1000):
         # Create a random solution
         r = [float(random.randint(domain[i][0], domain[i][1]))
              for i in range(len(domain))]
         # Get the cost
         cost = costf(r)
 
+        if bestr is None:
+            bestr = r
+            best = cost
+
         # Compare it to the best one so far
         if cost < best:
             best = cost
             bestr = r
+            print(r, best)
 
-    return r
+    return bestr
 
-s=[4, 4, 4, 2, 2, 6, 5, 4, 5, 6, 7, 0]
-schedulecost(s)
-#domain=[(0,9)]*(len(people)*2)
-#randomoptimize(domain, schedulecost)
+def hillclimb(domain, costf):
+    # Create a random solution
+    sol = [random.randint(domain[i][0], domain[i][1]) for i in range(len(domain))]
+
+    # Main loop
+    while 1:
+
+        # Create list of neighboring solutions
+        neighbors = []
+        for j in range(len(domain)):
+
+            # One away in each direction
+            if sol[j] > domain[j][0]:
+                neighbors.append(sol[0:j] + [sol[j]-1] + sol[j+1:])
+            if sol[j] < domain[j][1]:
+                neighbors.append(sol[0:j] + [sol[j]+1] + sol[j+1:])
+
+        # See what the best solution amongst the neighbors is
+        current = costf(sol)
+        best = current
+        for j in range(len(neighbors)):
+            cost = costf(neighbors[j])
+            if cost < best:
+                best = cost
+                sol = neighbors[j]
+
+        # If there's no improvement, then we're reached the top
+        if best == current:
+            break
+    return sol
+
+
