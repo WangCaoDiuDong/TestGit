@@ -36,6 +36,10 @@ def schedulecost(sol):
     totalprice = 0
     latestarrival = 0
     earliestdep = 24*60
+
+    if sol is None:
+        return
+
     for d in range(int(len(sol)/2)):
         # Get the inbound and outbound flights
         origin = people[d][1]
@@ -132,7 +136,8 @@ def annealingoptimize(domain, costf, T=10000.0, cool=0.95, step=1):
         i = random.randint(0, len(domain)-1)
 
         # Choose a direction to change it
-        dir = step * (-1)**int(round(random.random()))
+        dir = random.randint(-step, step)
+
         # Create a new list with one of the values changed
         vecb = vec[:]
         vecb[i] += dir
@@ -150,7 +155,7 @@ def annealingoptimize(domain, costf, T=10000.0, cool=0.95, step=1):
         if eb < ea:
             vec = vecb
         else:
-            p = pow(math.e, -(eb-ea)/T)
+            p = pow(math.e, (-eb-ea)/T)
             if random.random() < p:
                 vec = vecb
 
@@ -171,9 +176,9 @@ def geneticoptimize(domain, costf, popsize=50, step=1, mutprob=0.2, elite=0.2, m
     # Crossover Operation
     def crossover(r1, r2):
         i = random.randint(1, len(domain)-2)
-        return r1[0:i]+ r2[i:]
+        return r1[0:i] + r2[i:]
 
-    # Bulid the initial population
+    # Build the initial population
     pop = []
     for i in range(popsize):
         vec = [random.randint(domain[i][0], domain[i][1]) for i in range(len(domain))]
@@ -184,19 +189,21 @@ def geneticoptimize(domain, costf, popsize=50, step=1, mutprob=0.2, elite=0.2, m
 
     # Main loop
     for i in range(maxiter):
-        scores=[(costf(v), v) for v in pop]
+        scores = [(costf(v), v) for v in pop]
         scores.sort()
-        ranked=[v for (s,v) in scores]
+        ranked = [v for (s, v) in scores]
 
         # Start with the pure winners
-        pop= ranked[0:topelite]
+        pop = ranked[0:topelite]
 
         # Add mutated and bred forms of the winners
-        while len(pop)< popsize:
-            if random.random()< mutprob:
+        while len(pop) < popsize:
+            if random.random() < mutprob:
                 # Mutation
                 c = random.randint(0, topelite)
-                pop.append(mutate(ranked[c]))
+                tmpV = mutate(ranked[c])
+                if tmpV is not None:
+                    pop.append(tmpV)
             else:
 
                 # Crossover
@@ -204,11 +211,11 @@ def geneticoptimize(domain, costf, popsize=50, step=1, mutprob=0.2, elite=0.2, m
                 c2 = random.randint(0, topelite)
                 pop.append(crossover(ranked[c1], ranked[c2]))
 
-        # Print curent best score
-        print(scores[0][0])
+        # Print current best score
+        print(scores[0][0], scores[1][0])
     return scores[1][0]
 
 
-domain = [(0, 9)]*(len(people)*2)
-
+#domain = [(0, 9)]*(len(people)*2)
+#geneticoptimize(domain, schedulecost)
 #annealingoptimize(domain, schedulecost)
